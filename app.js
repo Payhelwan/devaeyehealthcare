@@ -9,8 +9,8 @@ const CLINIC_CONFIG = {
   tagline: "Professional Eye Care & Premium Optical Studio",
   phone: "+919876543210",
   displayPhone: "+91 98765 43210",
-  address: "Ground Floor, City Center Mall Road, Opp. Metro Station",
-  hours: "Mon – Sat: 9:30 AM – 8:30 PM • Sunday: 10:00 AM – 2:00 PM",
+  address: "Station Road, Near Post Office, Sarvat Khani, Chedibeer, Bhadohi, Piyari, Uttar Pradesh 221401",
+  hours: "Open Everyday: 9:00 AM – 8:00 PM",
   googleReviewUrl: "https://maps.google.com", // Replace with clinic's direct Google Maps Place review link
 };
 
