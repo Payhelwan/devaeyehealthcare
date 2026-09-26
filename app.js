@@ -7,8 +7,8 @@
 const CLINIC_CONFIG = {
   name: "Deva Eye Healthcare",
   tagline: "Professional Eye Care & Premium Optical Studio",
-  phone: "+919876543210",
-  displayPhone: "+91 98765 43210",
+  phone: "+918299449519",
+  displayPhone: "+91 82994 49519",
   address: "Station Road, Near Post Office, Sarvat Khani, Chedibeer, Bhadohi, Piyari, Uttar Pradesh 221401",
   hours: "Open Everyday: 9:00 AM – 8:00 PM",
   googleReviewUrl: "https://search.google.com/local/writereview?placeid=ChIJjXrjXfzfjzkRYtij8ZW9aYI",
