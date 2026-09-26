@@ -200,9 +200,56 @@ function generateClaimCode() {
   return `DEVA-${randomNum}`;
 }
 
-// Main Spin Action
+// Lock wheel permanently once spun
+function lockWheelPermanently() {
+  if (spinBtn) {
+    spinBtn.disabled = true;
+    spinBtn.classList.add("opacity-70", "cursor-not-allowed");
+    spinBtnText.textContent = "🔒 OFFER ALREADY CLAIMED";
+  }
+  if (centerSpinBtn) {
+    centerSpinBtn.disabled = true;
+    centerSpinBtn.classList.add("opacity-70", "cursor-not-allowed");
+  }
+  if (wheelStatus) {
+    wheelStatus.innerHTML = `
+      <span class="text-slate-500 font-medium">🔒 1-time spin completed for this visit</span>
+    `;
+  }
+}
+
+// Populate UI with reward information
+function populateRewardData(reward, code) {
+  document.getElementById("revealedRewardTitle").textContent = reward.text;
+  document.getElementById("revealedRewardDesc").textContent = reward.desc;
+  document.getElementById("revealedClaimCode").textContent = code;
+  document.getElementById("waRewardText").textContent = reward.text;
+  document.getElementById("waCodeText").textContent = code;
+
+  // Build WhatsApp URL with clean URI encoding
+  const waMessage = 
+`Hi! I won a surprise offer from ${CLINIC_CONFIG.name}.
+
+My reward: ${reward.text}
+My claim code: ${code}
+
+I’d like to claim my offer.`;
+
+  const phoneSanitized = CLINIC_CONFIG.phone.replace(/[^0-9]/g, "");
+  const whatsappUrl = `https://wa.me/${phoneSanitized}?text=${encodeURIComponent(waMessage)}`;
+  document.getElementById("whatsappLink").setAttribute("href", whatsappUrl);
+}
+
+// Main Spin Action (Strictly 1-time per customer)
 function spinWheel() {
   if (isSpinning) return;
+
+  // Enforce 1-time spin rule
+  if (localStorage.getItem("deva_saved_reward")) {
+    alert("You have already used your 1-time spin offer! Showing your active reward pass.");
+    checkSavedReward();
+    return;
+  }
 
   isSpinning = true;
   spinBtn.disabled = true;
@@ -228,7 +275,6 @@ function spinWheel() {
   const targetCenterDeg = (targetIndex * arcDeg) + (arcDeg / 2);
   
   // Calculate the rotation needed to bring targetCenterDeg to 270 deg
-  // (270 - targetCenterDeg + 360) % 360
   const normalizedAlignment = (270 - targetCenterDeg + 360) % 360;
   
   // Add 6 complete rotations (2160 deg) for suspenseful, natural deceleration
@@ -253,10 +299,10 @@ function spinWheel() {
 }
 
 // Reveal Screen 2: Reward Reveal Card
-function revealReward(reward) {
-  activeClaimCode = generateClaimCode();
+function revealReward(reward, savedCode) {
+  activeClaimCode = savedCode || generateClaimCode();
 
-  // Save to localStorage for session persistence
+  // Save to localStorage for permanent 1-time enforcement
   try {
     localStorage.setItem("deva_saved_reward", JSON.stringify({
       reward: reward,
@@ -268,24 +314,10 @@ function revealReward(reward) {
   }
 
   // Populate UI values
-  document.getElementById("revealedRewardTitle").textContent = reward.text;
-  document.getElementById("revealedRewardDesc").textContent = reward.desc;
-  document.getElementById("revealedClaimCode").textContent = activeClaimCode;
-  document.getElementById("waRewardText").textContent = reward.text;
-  document.getElementById("waCodeText").textContent = activeClaimCode;
+  populateRewardData(reward, activeClaimCode);
 
-  // Build WhatsApp URL with clean URI encoding
-  const waMessage = 
-`Hi! I won a surprise offer from ${CLINIC_CONFIG.name}.
-
-My reward: ${reward.text}
-My claim code: ${activeClaimCode}
-
-I’d like to claim my offer.`;
-
-  const phoneSanitized = CLINIC_CONFIG.phone.replace(/[^0-9]/g, "");
-  const whatsappUrl = `https://wa.me/${phoneSanitized}?text=${encodeURIComponent(waMessage)}`;
-  document.getElementById("whatsappLink").setAttribute("href", whatsappUrl);
+  // Permanently lock the wheel so no further spins can happen
+  lockWheelPermanently();
 
   // Trigger Tasteful Celebration Particles
   launchTastefulConfetti();
@@ -318,24 +350,18 @@ function launchTastefulConfetti() {
   }
 }
 
-// Reset view back to Screen 1 for another spin or review
-function resetWheelView() {
-  rewardSection.classList.add("hidden");
-  wheelSection.classList.remove("hidden", "opacity-0", "scale-95");
-
-  spinBtn.disabled = false;
-  centerSpinBtn.disabled = false;
-  spinBtn.classList.remove("opacity-80", "cursor-not-allowed");
-  spinBtnText.textContent = "SPIN & DISCOVER";
-  
-  wheelStatus.innerHTML = `
-    <svg class="w-3.5 h-3.5 text-teal-600 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    <span>Tap button below or center hub to spin</span>
-  `;
-
-  wheelSection.scrollIntoView({ behavior: "smooth", block: "start" });
+// Footer Discover Offers click handler
+function handleDiscoverOffersClick(e) {
+  if (e) e.preventDefault();
+  if (localStorage.getItem("deva_saved_reward")) {
+    wheelSection.classList.add("hidden");
+    rewardSection.classList.remove("hidden");
+    rewardSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    rewardSection.classList.add("hidden");
+    wheelSection.classList.remove("hidden");
+    wheelSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 // Copy Claim Code to Clipboard
@@ -380,36 +406,39 @@ function showCopiedSuccess(btn) {
 
 // Check for existing saved reward on initial load
 function checkSavedReward() {
+  // Allow owner/admin test reset with ?reset=true in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("reset") === "true") {
+    localStorage.removeItem("deva_saved_reward");
+    return;
+  }
+
   try {
     const raw = localStorage.getItem("deva_saved_reward");
     if (raw) {
       const data = JSON.parse(raw);
-      // Optional restore if user refreshes
-      // We keep Screen 1 as default landing, but provide a banner if a previous code exists
       if (data && data.claimCode && data.reward) {
-        const resumeBanner = document.getElementById("previousClaimBanner");
-        if (resumeBanner) {
-          resumeBanner.classList.remove("hidden");
-          document.getElementById("savedRewardSnippet").textContent = `${data.reward.text} (${data.claimCode})`;
-        }
+        activeReward = data.reward;
+        activeClaimCode = data.claimCode;
+
+        // Populate reward pass data
+        populateRewardData(data.reward, data.claimCode);
+
+        // Lock wheel in background
+        lockWheelPermanently();
+
+        // Directly display Screen 2 (Reward pass) for returning customer
+        wheelSection.classList.add("hidden");
+        rewardSection.classList.remove("hidden");
+        rewardSection.classList.remove("opacity-0");
+
+        // Show 1-time notice badge
+        const notice = document.getElementById("alreadyClaimedNotice");
+        if (notice) notice.classList.remove("hidden");
       }
     }
   } catch (e) {
     // Ignore storage check
-  }
-}
-
-function restoreSavedReward() {
-  try {
-    const raw = localStorage.getItem("deva_saved_reward");
-    if (raw) {
-      const data = JSON.parse(raw);
-      activeReward = data.reward;
-      activeClaimCode = data.claimCode;
-      revealReward(activeReward);
-    }
-  } catch (e) {
-    // Ignore
   }
 }
 
