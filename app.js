@@ -1,11 +1,11 @@
 /**
- * Deva Eye Healthcare - In-Store Surprise Reward Experience
+ * Deva Health and Eyecare - In-Store Surprise Reward Experience
  * Production-ready mobile logic: Canvas Wheel, Easing Physics, WhatsApp Encoder
  */
 
 // Clinic Brand & Store Configuration
 const CLINIC_CONFIG = {
-  name: "Deva Eye Healthcare",
+  name: "Deva Health and Eyecare",
   tagline: "Professional Eye Care & Premium Optical Studio",
   phone: "+918299449519",
   displayPhone: "+91 82994 49519",
