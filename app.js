@@ -11,7 +11,7 @@ const CLINIC_CONFIG = {
   displayPhone: "+91 98765 43210",
   address: "Station Road, Near Post Office, Sarvat Khani, Chedibeer, Bhadohi, Piyari, Uttar Pradesh 221401",
   hours: "Open Everyday: 9:00 AM – 8:00 PM",
-  googleReviewUrl: "https://maps.google.com", // Replace with clinic's direct Google Maps Place review link
+  googleReviewUrl: "https://search.google.com/local/writereview?placeid=ChIJjXrjXfzfjzkRYtij8ZW9aYI",
 };
 
 // Prize Wheel Segments (Requested 8 options)
